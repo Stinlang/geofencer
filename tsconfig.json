@@ -15,6 +15,6 @@
     "noEmit": true,
     "jsx": "react"
   },
-  "include": ["src"],
+  "include": ["src", "@deck.gl/layers/deck-gl.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
