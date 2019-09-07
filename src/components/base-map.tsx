@@ -1,6 +1,6 @@
 import DeckGL from '@deck.gl/react';
 import { EditableGeoJsonLayer } from '@nebula.gl/layers';
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import { StaticMap } from 'react-map-gl';
 import { PUBLIC_MAPBOX_TOKEN } from '../config';
 
@@ -12,28 +12,35 @@ const initialViewState = {
   zoom: 11,
 };
 
-class BaseMap extends Component<any, any> {
-  private layers = [
+const BaseMap = () => {
+  const [data, setData] = useState({
+    features: [],
+    type: 'FeatureCollection',
+  });
+
+  const layers = [
     new EditableGeoJsonLayer({
+      data,
       id: 'geojson-layer',
       mode: 'drawPolygon',
+      onEdit: ({ updatedData }: any) => setData(updatedData),
+      selectedFeatureIndexes: [],
     }),
   ];
-  public render() {
-    return (
-      <DeckGL
-        initialViewState={initialViewState}
-        controller={true}
-        layers={this.layers}
-      >
-        <StaticMap
-          mapboxApiAccessToken={PUBLIC_MAPBOX_TOKEN}
-          width={0}
-          height={0}
-        />
-      </DeckGL>
-    );
-  }
-}
+
+  return (
+    <DeckGL
+      initialViewState={initialViewState}
+      controller={true}
+      layers={layers}
+    >
+      <StaticMap
+        mapboxApiAccessToken={PUBLIC_MAPBOX_TOKEN}
+        width={0}
+        height={0}
+      />
+    </DeckGL>
+  );
+};
 
 export default BaseMap;
