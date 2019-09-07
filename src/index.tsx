@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import BaseMap from './components/base-map';
+import AppContainer from './components/app-container';
 import './static/index.css';
 
-ReactDOM.render(<BaseMap />, document.getElementById('root'));
+ReactDOM.render(<AppContainer />, document.getElementById('root'));
