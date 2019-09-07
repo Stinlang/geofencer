@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.5ecd60fb.chunk.css",
-    "main.js": "/static/js/main.c65cddf8.chunk.js",
-    "main.js.map": "/static/js/main.c65cddf8.chunk.js.map",
-    "runtime~main.js": "/static/js/runtime~main.c7269e0e.js",
-    "runtime~main.js.map": "/static/js/runtime~main.c7269e0e.js.map",
-    "static/js/2.9351c2b9.chunk.js": "/static/js/2.9351c2b9.chunk.js",
-    "static/js/2.9351c2b9.chunk.js.map": "/static/js/2.9351c2b9.chunk.js.map",
-    "index.html": "/index.html",
-    "precache-manifest.62aa07e794512927f2331e57b800d84a.js": "/precache-manifest.62aa07e794512927f2331e57b800d84a.js",
-    "service-worker.js": "/service-worker.js",
-    "static/css/main.5ecd60fb.chunk.css.map": "/static/css/main.5ecd60fb.chunk.css.map"
+    "main.css": "/geofencer/static/css/main.5ecd60fb.chunk.css",
+    "main.js": "/geofencer/static/js/main.c65cddf8.chunk.js",
+    "main.js.map": "/geofencer/static/js/main.c65cddf8.chunk.js.map",
+    "runtime~main.js": "/geofencer/static/js/runtime~main.153dc545.js",
+    "runtime~main.js.map": "/geofencer/static/js/runtime~main.153dc545.js.map",
+    "static/js/2.e3eeeac6.chunk.js": "/geofencer/static/js/2.e3eeeac6.chunk.js",
+    "static/js/2.e3eeeac6.chunk.js.map": "/geofencer/static/js/2.e3eeeac6.chunk.js.map",
+    "index.html": "/geofencer/index.html",
+    "precache-manifest.f0197fc3a2f01166a668aeae1a3ef45c.js": "/geofencer/precache-manifest.f0197fc3a2f01166a668aeae1a3ef45c.js",
+    "service-worker.js": "/geofencer/service-worker.js",
+    "static/css/main.5ecd60fb.chunk.css.map": "/geofencer/static/css/main.5ecd60fb.chunk.css.map"
   }
 }
