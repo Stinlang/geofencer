@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/geofencer/precache-manifest.83ade89ba58b44211c3d7a77a1f66739.js"
+  "/geofencer/precache-manifest.aa2c66f2147f16c7e57ba93a22c7097c.js"
 );
 
 self.addEventListener('message', (event) => {
