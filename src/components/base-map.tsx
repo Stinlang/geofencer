@@ -29,33 +29,31 @@ const BaseMap = () => {
     features: [],
     type: 'FeatureCollection',
   });
+  const [cursor, setCursor] = useState<string>('all-scroll');
   const [mode, setMode] = useState<string>('drawPolygon');
   const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState<
     Array<number>
   >([]);
 
-  const getSelectedGeometry: any = () => {
-    const selectedFeature: any = data.features[selectedFeatureIndexes[0]];
-    return selectedFeature ? selectedFeature.geometry : null;
-  };
-
   useEffect(() => {
-    const geo = getSelectedGeometry();
+    const selectedFeature: any = data.features[selectedFeatureIndexes[0]];
+    const geo = selectedFeature ? selectedFeature.geometry : null;
     if (geo) {
       console.log(geo);
       console.log(Geometry.parseGeoJSON(geo).toWkt());
     }
-  }, [selectedFeatureIndexes]);
+  }, [selectedFeatureIndexes, data.features]);
 
   class CustomEditableGeoJsonLayer extends EditableGeoJsonLayer {
     constructor(props: any) {
       super(props);
     }
 
-    protected onLayerClick(e: LayerEvent) {
-      if (this.isFeaturePicked(e.picks)) {
-        const selectedIndexes = e.picks.map(pick => pick.index);
+    protected onLayerClick(event: LayerEvent) {
+      if (this.isFeaturePicked(event.picks)) {
+        const selectedIndexes = event.picks.map(pick => pick.index);
         setSelectedFeatureIndexes(selectedIndexes);
+        setCursor('all-scroll');
         if (this.props.mode !== 'translate') {
           setMode('translate');
         }
@@ -65,7 +63,18 @@ const BaseMap = () => {
         }
         setMode('drawPolygon');
       }
-      super.onLayerClick(e);
+      super.onLayerClick(event);
+    }
+
+    protected onPointerMove(event: any) {
+      const { picks } = event;
+      const [pick] = picks;
+      if (pick && pick.index === selectedFeatureIndexes[0]) {
+        setCursor('all-scroll');
+      } else {
+        setCursor('grab');
+      }
+      super.onPointerMove(event);
     }
 
     private isFeaturePicked(picks: Array<Pick>) {
@@ -98,6 +107,7 @@ const BaseMap = () => {
       initialViewState={initialViewState}
       controller={true}
       layers={layers}
+      getCursor={() => cursor}
     >
       <StaticMap
         mapboxApiAccessToken={PUBLIC_MAPBOX_TOKEN}
