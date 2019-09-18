@@ -1,13 +1,34 @@
 import DeckGL from '@deck.gl/react';
 import { EditableGeoJsonLayer } from '@nebula.gl/layers';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StaticMap } from 'react-map-gl';
+import { connect } from 'react-redux';
 import { Geometry } from 'wkx';
+import {
+  setCursorAction,
+  setDrawModeAction,
+  setModifyModeAction,
+  setSelectedFeatureIndexAction,
+  updateDataAction,
+} from '../actions/map';
 import { PUBLIC_MAPBOX_TOKEN } from '../config';
+import { StoreState } from '../reducers';
+import { MapState } from '../reducers/map';
+
+interface Props {
+  map: MapState;
+  setCursor: (cursor: string) => void;
+  setSelectedFeatureIndex: (selectedFeatureIndex: number) => void;
+}
 
 interface Pick {
   object: { type: string };
   index: number;
+}
+
+interface EditEvent {
+  updatedData: any;
+  editType: string;
 }
 
 interface LayerEvent {
@@ -24,25 +45,68 @@ const initialViewState = {
   zoom: 11,
 };
 
-const BaseMap = () => {
-  const [data, setData] = useState({
-    features: [],
-    type: 'FeatureCollection',
-  });
-  const [cursor, setCursor] = useState<string>('all-scroll');
-  const [mode, setMode] = useState<string>('drawPolygon');
-  const [selectedFeatureIndexes, setSelectedFeatureIndexes] = useState<
-    Array<number>
-  >([]);
+const editModeCursor: { [key: string]: string } = {
+  drawPolygon: 'crosshair',
+  duplicate: 'copy',
+  modify: 'crosshair',
+  panning: 'grabbing',
+  rotate: 'alias',
+  scale: 'nesw-resize',
+  translate: 'grab',
+};
+
+const BaseMap = ({
+  map: { cursor, data, drawMode, modifyMode, selectedFeatureIndex },
+  setCursor,
+  setDrawMode,
+  setModifyMode,
+  setSelectedFeatureIndex,
+  updateData,
+}: any) => {
+  const [activeMode, setActiveMode] = useState(drawMode);
 
   useEffect(() => {
-    const selectedFeature: any = data.features[selectedFeatureIndexes[0]];
-    const geo = selectedFeature ? selectedFeature.geometry : null;
-    if (geo) {
-      console.log(geo);
-      console.log(Geometry.parseGeoJSON(geo).toWkt());
+    setActiveMode(selectedFeatureIndex >= 0 ? modifyMode : drawMode);
+  }, [drawMode, modifyMode]);
+
+  useEffect(() => {
+    console.log(selectedFeatureIndex);
+  });
+
+  function handleKeyUp(e: KeyboardEvent) {
+    switch (e.key) {
+      case 'Escape':
+        setSelectedFeatureIndex(-1);
+        break;
+      case 'Delete':
+      case 'Backspace':
+        console.log(selectedFeatureIndex);
+        if (selectedFeatureIndex >= 0) {
+          delete data.features[selectedFeatureIndex];
+          const newData = {
+            ...data,
+            features: data.features.filter(Boolean),
+          };
+          updateData(newData);
+          setSelectedFeatureIndex(-1);
+        }
+        break;
     }
-  }, [selectedFeatureIndexes, data.features]);
+  }
+
+  useEffect(() => {
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
+  const setModeCursor = (mode: string) => {
+    const cursorType = editModeCursor[mode];
+    if (cursorType && cursor !== cursorType) {
+      setCursor(cursorType);
+    }
+  };
 
   class CustomEditableGeoJsonLayer extends EditableGeoJsonLayer {
     constructor(props: any) {
@@ -51,31 +115,33 @@ const BaseMap = () => {
 
     protected onLayerClick(event: LayerEvent) {
       if (this.isFeaturePicked(event.picks)) {
-        const selectedIndexes = event.picks.map(pick => pick.index);
-        setSelectedFeatureIndexes(selectedIndexes);
-        setCursor('all-scroll');
-        if (this.props.mode !== 'translate') {
-          setMode('translate');
-        }
+        const selectedIndex = event.picks[0].index;
+        setSelectedFeatureIndex(selectedIndex);
+        setModeCursor(modifyMode);
+        setActiveMode(modifyMode);
       } else {
-        if (selectedFeatureIndexes.length) {
-          setSelectedFeatureIndexes([]);
+        if (selectedFeatureIndex >= 0) {
+          setSelectedFeatureIndex(-1);
         }
-        setMode('drawPolygon');
+        setActiveMode(drawMode);
       }
       super.onLayerClick(event);
     }
 
-    protected onPointerMove(event: any) {
-      const { picks } = event;
-      const [pick] = picks;
-      if (pick && pick.index === selectedFeatureIndexes[0]) {
-        setCursor('all-scroll');
-      } else {
-        setCursor('grab');
-      }
-      super.onPointerMove(event);
-    }
+    // protected onPointerMove(event: any) {
+    //   const { picks, isDragging } = event;
+    //   const [pick] = picks;
+    //   if (pick) {
+    //     if (pick.index === selectedFeatureIndex) {
+    //       setModeCursor(modifyMode);
+    //     } else {
+    //       setCursor('pointer');
+    //     }
+    //   } else if (!isDragging) {
+    //     setModeCursor(drawMode);
+    //   }
+    //   super.onPointerMove(event);
+    // }
 
     private isFeaturePicked(picks: Array<Pick>) {
       if (!picks.length) {
@@ -85,6 +151,18 @@ const BaseMap = () => {
         .length;
     }
   }
+
+  const handleOnEdit = ({ updatedData, editType }: EditEvent) => {
+    const editTypeCursor: { [key: string]: string } = {
+      translated: 'grab',
+      translating: 'grabbing',
+    };
+    const cursorType = editTypeCursor[editType];
+    if (cursorType) {
+      setCursor(cursorType);
+    }
+    updateData(updatedData);
+  };
 
   const layers = [
     new CustomEditableGeoJsonLayer({
@@ -96,9 +174,10 @@ const BaseMap = () => {
       getLineDashArray: () => [0, 0],
       getTentativeLineColor: () => [10, 0, 0, 200],
       id: 'selected-features-layer',
-      mode,
-      onEdit: ({ updatedData }: any) => setData(updatedData),
-      selectedFeatureIndexes,
+      mode: activeMode,
+      onEdit: handleOnEdit,
+      selectedFeatureIndexes:
+        selectedFeatureIndex < 0 ? [] : [selectedFeatureIndex],
     }),
   ];
 
@@ -118,4 +197,16 @@ const BaseMap = () => {
   );
 };
 
-export default BaseMap;
+const mapStateToProps = (state: StoreState) => ({ map: state.map });
+const mapDispatchToProps = {
+  setCursor: setCursorAction,
+  setDrawMode: setDrawModeAction,
+  setModifyMode: setModifyModeAction,
+  setSelectedFeatureIndex: setSelectedFeatureIndexAction,
+  updateData: updateDataAction,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(BaseMap);
